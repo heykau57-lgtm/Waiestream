@@ -393,6 +393,10 @@ img{display:block;object-fit:cover}
       allowfullscreen webkitallowfullscreen mozallowfullscreen
       allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer">
     </iframe>
+    <!-- Subtitle overlay -->
+    <div id="subOverlay" style="position:absolute;bottom:70px;left:0;right:0;z-index:8;text-align:center;pointer-events:none;display:none">
+      <span id="subText" style="background:rgba(0,0,0,.75);color:#fff;font-size:14px;font-weight:500;padding:4px 12px;border-radius:5px;line-height:1.6;display:inline-block;max-width:90%"></span>
+    </div>
     <div class="pload-ov" id="pLoad">
       <div class="pload-logo">WaieStream</div>
       <div class="spin"></div>
@@ -400,14 +404,14 @@ img{display:block;object-fit:cover}
     </div>
     <div class="perror-ov" id="pError">
       <div class="perror-ic">😕</div>
-      <div class="perror-msg">Video tidak dapat dimuatkan.<br>Cuba sumber lain di bawah.</div>
+      <div class="perror-msg">Video tidak tersedia di sumber ini.<br>Cuba sumber lain.</div>
       <button class="perror-retry" onclick="nextSrc()">Cuba Sumber Lain →</button>
     </div>
   </div>
   <div class="pbot">
     <div class="psrc-row" id="pSrcRow"></div>
     <div class="pbot-row2">
-      <div class="psubtitle-info">💬 Subtitle: tekan CC dalam player</div>
+      <div class="psubtitle-info">💬 Subtitle: tekan ikon CC/SUB dalam video</div>
       <button class="pfs-btn" onclick="goFS()">⛶ Skrin Penuh</button>
     </div>
   </div>
@@ -778,7 +782,14 @@ function openPlayer(){
     `<button class="psrc-btn${i===0?' on':''}" onclick="loadSrc(${i})">${s.n}</button>`
   ).join('');
   loadSrc(0);
-  // Tunjuk player — SEMBUNYIKAN halaman lain tapi JANGAN tunjuk auth
+  // Fetch subtitle Melayu
+  subLines=[];vidStartTime=null;
+  if(subTimer){clearInterval(subTimer);subTimer=null;}
+  document.getElementById('subOverlay').style.display='none';
+  const _t=curFilm.title||curFilm.name||'';
+  const _y=(curFilm.release_date||curFilm.first_air_date||'').split('-')[0]||'';
+  fetchSubtitle(_t,_y,curFilm.tv);
+  // Tunjuk player
   ['pgApp','pgLib','pgProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
   document.getElementById('pgPlayer').classList.add('on');
 }
@@ -796,10 +807,32 @@ function loadSrc(idx){
   const frame=document.getElementById('pFrame');
   frame.src='';
   frame.removeAttribute('sandbox');
+
+  // Auto detect error dalam iframe
+  frame.onerror=()=>{
+    document.getElementById('pLoad').classList.add('hide');
+    document.getElementById('pError').classList.add('show');
+  };
+
   setTimeout(()=>{
     frame.src=src.u;
-    // Hide loader selepas 7s
-    setTimeout(()=>document.getElementById('pLoad').classList.add('hide'),7000);
+    // Auto skip ke sumber lain kalau 404 (check after 5s)
+    const errTimer=setTimeout(()=>{
+      try{
+        const fw=frame.contentWindow;
+        // Kalau dapat access dan ada 404 text
+        if(fw&&fw.document&&fw.document.body){
+          const body=fw.document.body.innerText||'';
+          if(body.includes('404')||body.includes('not found')||body.includes('Not Found')){
+            document.getElementById('pLoad').classList.add('hide');
+            document.getElementById('pError').classList.add('show');
+            return;
+          }
+        }
+      }catch(e){/* cross-origin, normal */}
+      document.getElementById('pLoad').classList.add('hide');
+    },7000);
+    frame._errTimer=errTimer;
   },400);
 }
 
@@ -814,6 +847,9 @@ function nextSrc(){
 // KELUAR PLAYER — KEMBALI KE APP BUKAN LOGIN
 function closePlayer(){
   document.getElementById('pFrame').src='';
+  if(subTimer){clearInterval(subTimer);subTimer=null;}
+  subLines=[];vidStartTime=null;
+  document.getElementById('subOverlay').style.display='none';
   try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}
   document.getElementById('pgPlayer').classList.remove('on');
   // Kembali ke prevPage — PASTIKAN ada user
@@ -988,6 +1024,94 @@ function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('on');
   setTimeout(()=>t.classList.remove('on'),2500);
+}
+
+// ═══════════════════════════════
+// OPENSUBTITLES — Subtitle Melayu
+// ═══════════════════════════════
+const OSKEY = '7QRiCzFftTIuPfEG4LNe0SjXAqjTOHiT';
+let subLines = [];
+let subTimer = null;
+let vidStartTime = null;
+
+async function fetchSubtitle(title, year, tv) {
+  if (!OSKEY) return; // Tak ada API key, skip
+  try {
+    const lang = 'ms,en'; // Melayu dulu, English backup
+    const type = tv ? 'episode' : 'movie';
+    const q = encodeURIComponent(title);
+    const res = await fetch(`https://api.opensubtitles.com/api/v1/subtitles?query=${q}&languages=${lang}&type=${type}&year=${year}`, {
+      headers: {
+        'Api-Key': OSKEY,
+        'Content-Type': 'application/json',
+        'User-Agent': 'WaieStream v5'
+      }
+    });
+    const data = await res.json();
+    const sub = data?.data?.[0];
+    if (!sub) return;
+    // Download subtitle file
+    const dlRes = await fetch('https://api.opensubtitles.com/api/v1/download', {
+      method: 'POST',
+      headers: {'Api-Key': OSKEY, 'Content-Type': 'application/json', 'User-Agent': 'WaieStream v5'},
+      body: JSON.stringify({file_id: sub.attributes.files[0].file_id})
+    });
+    const dlData = await dlRes.json();
+    if (!dlData.link) return;
+    const srtRes = await fetch(dlData.link);
+    const srtText = await srtRes.text();
+    subLines = parseSRT(srtText);
+    if (subLines.length > 0) {
+      document.getElementById('subOverlay').style.display = 'block';
+      toast('💬 Subtitle berjaya dimuatkan!');
+      vidStartTime = Date.now();
+      startSubTimer();
+    }
+  } catch(e) { console.log('Subtitle error:', e); }
+}
+
+function parseSRT(srt) {
+  const lines = [];
+  try {
+    const blocks = srt.trim().split('\n\n');
+    for (const block of blocks) {
+      const rows = block.trim().split('\n');
+      if (rows.length < 2) continue;
+      const timeRow = rows.find(function(r){ return r.indexOf('-->') > -1; });
+      if (!timeRow) continue;
+      const parts = timeRow.split('-->');
+      if (parts.length < 2) continue;
+      function toSec(t) {
+        const clean = t.trim().replace(',','.');
+        const seg = clean.split(':');
+        if (seg.length === 3) return parseFloat(seg[0])*3600 + parseFloat(seg[1])*60 + parseFloat(seg[2]);
+        if (seg.length === 2) return parseFloat(seg[0])*60 + parseFloat(seg[1]);
+        return 0;
+      }
+      const start = toSec(parts[0]);
+      const end = toSec(parts[1]);
+      const ti = rows.indexOf(timeRow);
+      const text = rows.slice(ti + 1).join(' ').replace(/<[^>]+>/g, '').trim();
+      if (text) lines.push({start:start, end:end, text:text});
+    }
+  } catch(e) { console.log('SRT parse error:', e); }
+  return lines;
+}
+
+function startSubTimer() {
+  if (subTimer) clearInterval(subTimer);
+  subTimer = setInterval(() => {
+    if (!vidStartTime) return;
+    const elapsed = (Date.now() - vidStartTime) / 1000;
+    const cur = subLines.find(l => elapsed >= l.start && elapsed <= l.end);
+    const el = document.getElementById('subText');
+    if (cur) {
+      el.textContent = cur.text;
+      document.getElementById('subOverlay').style.display = 'block';
+    } else {
+      el.textContent = '';
+    }
+  }, 250);
 }
 
 // ═══════════════════════════════
