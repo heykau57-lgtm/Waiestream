@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#06090f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>WaieStream</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06090f;--surf:#0f1624;--card:#111827;--card2:#151f30;--bdr:#1c2a40;--bdr2:#243250;--gold:#f0c040;--gold2:#c89820;--red:#e8394a;--txt:#edf0f7;--txt2:#8fa3c0;--txt3:#4d6080;--green:#22c55e;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:'Plus Jakarta Sans',sans-serif;overflow-x:hidden}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+input,select{font-family:inherit}
+img{display:block;object-fit:cover}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+
+/* ══ PAGES ══ */
+.pg{display:none}
+.pg.on{display:block}
+#pgAuth.on{display:flex}
+#pgPlayer.on{display:flex}
+
+/* ══ LOADER ══ */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .4s}
+#loader.hide{opacity:0;pointer-events:none}
+.llogo{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:5px;background:linear-gradient(135deg,var(--gold),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.spin{width:30px;height:30px;border:3px solid var(--bdr2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ AUTH ══ */
+#pgAuth{min-height:100vh;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 20%,rgba(240,192,64,.08),transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(59,130,246,.07),transparent 50%),var(--bg);}
+.acard{width:100%;max-width:380px;background:rgba(15,22,36,.96);border:1px solid var(--bdr2);border-radius:20px;padding:32px 28px;backdrop-filter:blur(24px)}
+.alogo{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:4px;background:linear-gradient(135deg,var(--gold),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:3px}
+.atag{text-align:center;color:var(--txt3);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:22px}
+.atabs{display:flex;background:var(--surf);border-radius:9px;padding:3px;margin-bottom:18px}
+.atab{flex:1;padding:8px;border-radius:7px;color:var(--txt3);font-size:13px;font-weight:600;transition:all .2s}
+.atab.on{background:var(--card2);color:var(--txt)}
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:5px}
+.fi{width:100%;background:var(--surf);border:1px solid var(--bdr);border-radius:9px;padding:11px 13px;color:var(--txt);font-size:14px;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--gold)}
+.fi::placeholder{color:var(--txt3)}
+.abtn{width:100%;padding:12px;margin-top:6px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;color:#0a0a0a;font-size:14px;font-weight:700;box-shadow:0 4px 16px rgba(240,192,64,.25)}
+.abtn:active{transform:scale(.97)}
+.aerr{display:none;color:var(--red);font-size:12px;margin-top:8px;padding:8px 10px;background:rgba(232,57,74,.08);border:1px solid rgba(232,57,74,.2);border-radius:7px}
+.adiv{text-align:center;color:var(--txt3);font-size:11px;margin:14px 0;position:relative}
+.adiv::before,.adiv::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:var(--bdr)}
+.adiv::before{left:0}.adiv::after{right:0}
+.gbtn{width:100%;padding:10px;border:1px solid var(--bdr2);border-radius:9px;color:var(--txt2);font-size:13px;font-weight:500;transition:all .2s}
+.gbtn:hover{background:var(--surf);color:var(--txt)}
+
+/* ══ APP ══ */
+#pgApp{min-height:100vh;padding-bottom:72px}
+.tnav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:54px;background:rgba(6,9,15,.98);border-bottom:1px solid var(--bdr)}
+.tlogo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,var(--gold),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tnav-r{display:flex;align-items:center;gap:8px}
+.tbtn{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:6px 11px;color:var(--txt2);font-size:13px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--red));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0a0a0a;cursor:pointer}
+
+/* HERO */
+.hero{position:relative;height:75vw;max-height:440px;min-height:260px;overflow:hidden}
+.hbg{position:absolute;inset:0;background-size:cover;background-position:center top;transition:background-image .6s}
+.hbg::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,rgba(6,9,15,.97) 20%,rgba(6,9,15,.4) 65%,transparent),linear-gradient(to top,rgba(6,9,15,1) 0%,rgba(6,9,15,.1) 55%,transparent)}
+.hc{position:absolute;bottom:0;left:0;right:0;padding:14px 14px 18px;z-index:1}
+.hbadges{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.bdg{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.bdg-g{background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.3);color:var(--gold)}
+.bdg-r{background:rgba(232,57,74,.12);border:1px solid rgba(232,57,74,.3);color:var(--red)}
+.htitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,7vw,60px);line-height:.93;letter-spacing:1px;margin-bottom:7px;text-shadow:0 2px 16px rgba(0,0,0,.5)}
+.hmeta{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.hstar{color:var(--gold);font-weight:700;font-size:12px}
+.hm{color:var(--txt3);font-size:11px}
+.htags{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.htag{background:var(--surf);border:1px solid var(--bdr);padding:2px 7px;border-radius:4px;font-size:10px;color:var(--txt2)}
+.hdesc{color:#8fa3c0;font-size:12px;line-height:1.6;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hbtns{display:flex;gap:7px;flex-wrap:wrap}
+.btn-p{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a0a;font-weight:700;font-size:12px;padding:9px 18px;border-radius:8px;box-shadow:0 3px 14px rgba(240,192,64,.3)}
+.btn-s{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);color:var(--txt);font-size:12px;font-weight:500;padding:9px 14px;border:1px solid rgba(255,255,255,.12);border-radius:8px}
+.hdots{position:absolute;bottom:18px;right:14px;z-index:2;display:flex;gap:4px}
+.hdot{width:5px;height:5px;border-radius:50%;background:var(--txt3);cursor:pointer;transition:all .3s}
+.hdot.on{background:var(--gold);width:14px;border-radius:2px}
+
+/* CONTENT */
+.content{padding:0 12px 20px}
+.sec{margin-bottom:28px;padding-top:18px}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-ttl{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px}
+.sec-ttl .ac{color:var(--gold)}
+.see-all{color:var(--txt3);font-size:11px;padding:3px 6px}
+.see-all:hover{color:var(--gold)}
+.grow{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-top:14px;scrollbar-width:none}
+.grow::-webkit-scrollbar{display:none}
+.gchip{flex:0 0 auto;padding:6px 13px;border:1px solid var(--bdr);border-radius:7px;color:var(--txt3);font-size:11px;font-weight:500;background:var(--surf);white-space:nowrap}
+.gchip.on,.gchip:hover{background:rgba(240,192,64,.1);border-color:var(--gold);color:var(--gold)}
+.row{display:flex;gap:9px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.pc{flex:0 0 auto;width:110px;cursor:pointer}
+.pc:active{transform:scale(.96)}
+@media(min-width:480px){.pc{width:130px}}
+.pc-thumb{width:100%;aspect-ratio:2/3;border-radius:9px;overflow:hidden;position:relative;box-shadow:0 3px 14px rgba(0,0,0,.4);background:var(--card)}
+.pc-thumb img{width:100%;height:100%}
+.pc-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,9,15,.95) 0%,transparent 60%);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;opacity:0;transition:opacity .2s;border-radius:9px}
+.pc:hover .pc-ov{opacity:1}
+.pc-play{width:34px;height:34px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;color:#0a0a0a;margin-bottom:4px}
+.pc-lk{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:11px}
+.pc-lk.on{background:rgba(232,57,74,.3);border-color:var(--red)}
+.pc-info{margin-top:6px}
+.pc-title{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.pc-sub{font-size:9px;color:var(--txt3)}
+.skel{background:linear-gradient(90deg,var(--surf) 25%,var(--card2) 50%,var(--surf) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:9px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ══ BOTTOM NAV ══ */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(6,9,15,.98);border-top:1px solid var(--bdr);display:none;padding:8px 0 max(10px,env(safe-area-inset-bottom))}
+.bnav-in{display:flex;justify-content:space-around}
+.bni{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:2px 12px}
+.bni-ic{font-size:18px;transition:transform .2s}
+.bni.on .bni-ic{transform:scale(1.1)}
+.bni-lb{font-size:9px;font-weight:600;color:var(--txt3)}
+.bni.on .bni-lb{color:var(--gold)}
+
+/* ══ MODAL ══ */
+.mbg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.88);backdrop-filter:blur(12px);display:none;align-items:flex-end;justify-content:center}
+.mbg.on{display:flex}
+.modal{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.2,.64,1);position:relative}
+.mbg.on .modal{transform:translateY(0)}
+.mpill{width:32px;height:4px;background:var(--bdr2);border-radius:2px;margin:10px auto 0}
+.mclose{position:absolute;top:10px;right:10px;z-index:5;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);color:var(--txt);font-size:14px;display:flex;align-items:center;justify-content:center}
+.mhero{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;border-radius:18px 18px 0 0}
+.mhero-bg{width:100%;height:100%;background-size:cover;background-position:center;filter:brightness(.45)}
+.mhero-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.mplay{width:60px;height:60px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;color:#0a0a0a;box-shadow:0 0 36px rgba(240,192,64,.4)}
+.mplay-hint{color:rgba(255,255,255,.75);font-size:11px;font-weight:500}
+.mbody{padding:16px}
+.m-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1.5px;margin-bottom:8px}
+.m-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.m-desc{color:#8fa3c0;font-size:12px;line-height:1.68;margin-bottom:14px}
+.m-acts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.m-btn{display:flex;align-items:center;gap:4px;background:var(--surf);border:1px solid var(--bdr);color:var(--txt2);font-size:12px;font-weight:500;padding:8px 11px;border-radius:8px;transition:all .2s}
+.m-btn.lk.on{border-color:var(--red);color:var(--red);background:rgba(232,57,74,.1)}
+.m-btn.sv.on{border-color:var(--gold);color:var(--gold);background:rgba(240,192,64,.1)}
+.cast-ttl{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.cast-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.cast-row::-webkit-scrollbar{display:none}
+.cast-item{flex:0 0 auto;text-align:center;width:52px}
+.cast-av{width:46px;height:46px;border-radius:50%;overflow:hidden;margin:0 auto 4px;border:2px solid var(--bdr2);background:var(--surf)}
+.cast-av img{width:100%;height:100%}
+.cast-nm{font-size:9px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ══ CUSTOM VIDEO PLAYER ══ */
+#pgPlayer{position:fixed;inset:0;z-index:500;background:#000;flex-direction:column}
+.ptop{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,0,0,.8);flex-shrink:0;z-index:10}
+.pback{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);color:white;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ptitle-bar{font-size:13px;font-weight:600;color:white;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* VIDEO WRAPPER */
+.pvideo-wrap{flex:1;position:relative;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+.pvideo-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+/* LOADING STATE */
+.pload-ov{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:5;transition:opacity .4s}
+.pload-ov.hide{opacity:0;pointer-events:none}
+.pload-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;background:linear-gradient(135deg,var(--gold),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pload-txt{color:var(--txt2);font-size:11px;text-align:center;padding:0 20px}
+
+/* ERROR STATE */
+.perror-ov{position:absolute;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:6;padding:20px;text-align:center}
+.perror-ov.show{display:flex}
+.perror-ic{font-size:48px}
+.perror-msg{color:var(--txt2);font-size:13px;line-height:1.6}
+.perror-retry{background:var(--gold);color:#0a0a0a;font-weight:700;font-size:13px;padding:10px 24px;border-radius:9px;margin-top:8px}
+
+/* BOTTOM CONTROLS */
+.pbot{padding:10px 14px 12px;background:rgba(0,0,0,.85);flex-shrink:0;z-index:10}
+.psrc-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.psrc-btn{padding:7px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);transition:all .2s}
+.psrc-btn.on{background:var(--gold);color:#0a0a0a;border-color:var(--gold)}
+.psrc-btn:active{transform:scale(.95)}
+.pbot-row2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pfs-btn{background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.25);color:var(--gold);font-size:11px;font-weight:600;padding:7px 14px;border-radius:7px}
+.psubtitle-info{font-size:10px;color:var(--txt3);flex:1}
+
+/* ══ SEARCH ══ */
+.sovl{position:fixed;inset:0;z-index:300;background:rgba(6,9,15,.98);display:none;flex-direction:column;padding:0}
+.sovl.on{display:flex}
+.s-top{display:flex;align-items:center;gap:10px;padding:50px 14px 0}
+.s-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--bdr2);border-radius:12px;padding:11px 13px}
+.s-wrap:focus-within{border-color:rgba(240,192,64,.4)}
+.s-wrap input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14px}
+.s-wrap input::placeholder{color:var(--txt3)}
+.s-close{color:var(--txt2);font-size:14px;font-weight:600;padding:8px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;flex-shrink:0}
+.s-label{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;padding:12px 14px 8px}
+.s-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;flex:1;padding:0 14px 20px}
+@media(min-width:480px){.s-grid{grid-template-columns:repeat(4,1fr)}}
+.sgc{cursor:pointer}
+.sgc:active{transform:scale(.95)}
+.sgc-thumb{width:100%;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--card);position:relative;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.sgc-thumb img{width:100%;height:100%}
+.sgc-badge{position:absolute;top:4px;left:4px;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px}
+.sgc-title{font-size:11px;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.sgc-sub{font-size:9px;color:var(--txt3);margin-top:1px}
+
+/* ══ LIBRARY ══ */
+#pgLib{min-height:100vh;padding:60px 14px 80px}
+.lib-hd{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;margin-bottom:16px}
+.ltabs{display:flex;background:var(--surf);border-radius:9px;padding:3px;margin-bottom:18px}
+.ltab{flex:1;padding:8px;border-radius:7px;color:var(--txt3);font-size:12px;font-weight:600;transition:all .2s}
+.ltab.on{background:var(--card2);color:var(--txt)}
+.lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+@media(min-width:480px){.lgrid{grid-template-columns:repeat(4,1fr)}}
+.lempty{color:var(--txt3);text-align:center;padding:50px 0;font-size:12px;grid-column:1/-1}
+
+/* ══ PROFILE ══ */
+#pgProf{min-height:100vh;padding:60px 14px 80px}
+.prof-hd{display:flex;align-items:center;gap:13px;margin-bottom:22px}
+.prof-av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--red));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#0a0a0a;border:3px solid var(--gold)}
+.prof-nm{font-size:18px;font-weight:700}
+.prof-em{font-size:11px;color:var(--txt3);margin-top:2px}
+.prof-plan{display:inline-flex;gap:4px;background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.25);color:var(--gold);font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.stat{background:var(--surf);border:1px solid var(--bdr);border-radius:9px;padding:12px;text-align:center}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold)}
+.stat-l{font-size:9px;color:var(--txt3);margin-top:2px}
+.pmi{display:flex;align-items:center;justify-content:space-between;padding:12px 13px;background:var(--surf);border:1px solid var(--bdr);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.pmi:hover{border-color:var(--bdr2)}
+.pmi-l{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500}
+.btn-lo{width:100%;padding:12px;background:rgba(232,57,74,.1);border:1px solid rgba(232,57,74,.25);color:var(--red);font-size:13px;font-weight:600;border-radius:9px;margin-top:12px}
+.guest-box{background:rgba(240,192,64,.05);border:1px solid rgba(240,192,64,.18);border-radius:12px;padding:14px;text-align:center;margin-bottom:18px}
+.guest-box p{color:var(--txt2);font-size:12px;margin-bottom:10px}
+.guest-box-btns{display:flex;gap:8px;justify-content:center}
+.gbb{padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600}
+.gbb-g{background:var(--gold);color:#0a0a0a}
+.gbb-s{background:var(--surf);border:1px solid var(--bdr2);color:var(--txt2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(14px);z-index:9998;background:var(--card2);border:1px solid var(--bdr2);color:var(--txt);font-size:12px;font-weight:500;padding:8px 16px;border-radius:8px;opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="llogo">WaieStream</div><div class="spin"></div></div>
+
+<!-- AUTH — hilang terus bila login -->
+<div id="pgAuth" class="pg on">
+  <div class="acard">
+    <div class="alogo">WaieStream</div>
+    <div class="atag">v5.0 · Tonton Filem &amp; Drama</div>
+    <div class="atabs">
+      <button class="atab on" id="tLi" onclick="aTab('li')">Log Masuk</button>
+      <button class="atab" id="tRe" onclick="aTab('re')">Daftar</button>
+    </div>
+    <div id="fLi">
+      <div class="fg"><label class="fl">Nama / E-mel</label><input class="fi" id="liU" type="text" placeholder="nama atau email" autocomplete="username"></div>
+      <div class="fg"><label class="fl">Kata Laluan</label><input class="fi" id="liP" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLi()"></div>
+      <div class="aerr" id="liErr"></div>
+      <button class="abtn" onclick="doLi()">Log Masuk</button>
+    </div>
+    <div id="fRe" style="display:none">
+      <div class="fg"><label class="fl">Nama</label><input class="fi" id="reN" type="text" placeholder="Nama anda"></div>
+      <div class="fg"><label class="fl">E-mel</label><input class="fi" id="reE" type="email" placeholder="email@contoh.com"></div>
+      <div class="fg"><label class="fl">Kata Laluan</label><input class="fi" id="reP" type="password" placeholder="Min 6 aksara" onkeydown="if(event.key==='Enter')doRe()"></div>
+      <div class="aerr" id="reErr"></div>
+      <button class="abtn" onclick="doRe()">Daftar Percuma</button>
+    </div>
+    <div class="adiv">atau</div>
+    <button class="gbtn" onclick="doGuest()">👁️ Tetamu</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pgApp" class="pg">
+  <nav class="tnav">
+    <span class="tlogo">WaieStream</span>
+    <div class="tnav-r">
+      <button class="tbtn" onclick="openSrch()">🔍</button>
+      <div class="nav-av" id="navAv" onclick="goPage('prof')">W</div>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hbg" id="hBg"></div>
+    <div class="hc">
+      <div class="hbadges"><span class="bdg bdg-g">⭐ Trending</span><span class="bdg bdg-r">Minggu Ini</span></div>
+      <div class="htitle" id="hTitle">...</div>
+      <div class="hmeta"><span class="hstar" id="hRat">⭐ --</span><span class="hm" id="hYr">--</span><span class="hm" id="hTp">--</span></div>
+      <div class="htags" id="hTags"></div>
+      <div class="hdesc" id="hDesc">Sila tunggu...</div>
+      <div class="hbtns">
+        <button class="btn-p" id="hPlay">▶ Tonton</button>
+        <button class="btn-s" id="hInfo">ℹ Lanjut</button>
+        <button class="btn-s" id="hLike">♡</button>
+      </div>
+    </div>
+    <div class="hdots" id="hDots"></div>
+  </div>
+  <div class="content">
+    <div class="grow" id="gRow"></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">🔥 TRENDING <span class="ac">GLOBAL</span></div><button class="see-all" onclick="moreRow('trend')">Semua →</button></div><div class="row" id="rTrend"></div></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">🎬 FILEM <span class="ac">POPULAR</span></div><button class="see-all" onclick="moreRow('pop')">Semua →</button></div><div class="row" id="rPop"></div></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">🌸 ANIME <span class="ac">POPULAR</span></div><button class="see-all" onclick="moreRow('anime')">Semua →</button></div><div class="row" id="rAnime"></div></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">📺 DRAMA <span class="ac">TERBAIK</span></div><button class="see-all" onclick="moreRow('tv')">Semua →</button></div><div class="row" id="rTV"></div></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">🌏 FILEM <span class="ac">ASIA</span></div></div><div class="row" id="rAsia"></div></div>
+    <div class="sec"><div class="sec-hd"><div class="sec-ttl">⭐ RATING <span class="ac">TERTINGGI</span></div></div><div class="row" id="rTop"></div></div>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<div id="pgLib" class="pg">
+  <div class="lib-hd">PERPUSTAKAAN <span style="color:var(--gold)">SAYA</span></div>
+  <div class="ltabs">
+    <button class="ltab on" id="ltH" onclick="lTab('h')">📜 Sejarah</button>
+    <button class="ltab" id="ltS" onclick="lTab('s')">🔖 Simpan</button>
+    <button class="ltab" id="ltL" onclick="lTab('l')">❤️ Suka</button>
+  </div>
+  <div class="lgrid" id="lGrid"></div>
+</div>
+
+<!-- PROFILE -->
+<div id="pgProf" class="pg">
+  <div class="guest-box" id="guestBox" style="display:none">
+    <p>Akaun tetamu. Daftar untuk simpan sejarah!</p>
+    <div class="guest-box-btns">
+      <button class="gbb gbb-g" onclick="goPage('auth');aTab('re')">Daftar</button>
+      <button class="gbb gbb-s" onclick="goPage('auth');aTab('li')">Log Masuk</button>
+    </div>
+  </div>
+  <div class="prof-hd">
+    <div class="prof-av" id="prAv">W</div>
+    <div><div class="prof-nm" id="prNm">--</div><div class="prof-em" id="prEm">--</div><div class="prof-plan">⭐ WaieStream v5.0</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="stW">0</div><div class="stat-l">Ditonton</div></div>
+    <div class="stat"><div class="stat-n" id="stL">0</div><div class="stat-l">Disukai</div></div>
+    <div class="stat"><div class="stat-n" id="stS">0</div><div class="stat-l">Disimpan</div></div>
+  </div>
+  <div class="pmi" onclick="goPage('lib');lTab('h')"><div class="pmi-l"><span>📜</span>Sejarah Tontonan</div><span style="color:var(--txt3)">›</span></div>
+  <div class="pmi" onclick="goPage('lib');lTab('s')"><div class="pmi-l"><span>🔖</span>Filem Tersimpan</div><span style="color:var(--txt3)">›</span></div>
+  <div class="pmi" onclick="goPage('lib');lTab('l')"><div class="pmi-l"><span>❤️</span>Filem Disukai</div><span style="color:var(--txt3)">›</span></div>
+  <div class="pmi"><div class="pmi-l"><span>🔑</span>TMDB API</div><span style="color:var(--green);font-size:11px">✓ Aktif</span></div>
+  <button class="btn-lo" onclick="doLogout()">🚪 Log Keluar</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav" id="bnav">
+  <div class="bnav-in">
+    <div class="bni on" id="bApp" onclick="goPage('app')"><div class="bni-ic">🏠</div><div class="bni-lb">Utama</div></div>
+    <div class="bni" id="bSrch" onclick="openSrch()"><div class="bni-ic">🔍</div><div class="bni-lb">Cari</div></div>
+    <div class="bni" id="bLib" onclick="goPage('lib')"><div class="bni-ic">🔖</div><div class="bni-lb">Senarai</div></div>
+    <div class="bni" id="bProf" onclick="goPage('prof')"><div class="bni-ic">👤</div><div class="bni-lb">Profil</div></div>
+  </div>
+</nav>
+
+<!-- MODAL -->
+<div class="mbg" id="mbg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mpill"></div>
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <div class="mhero">
+      <div class="mhero-bg" id="mBg"></div>
+      <div class="mhero-ov">
+        <button class="mplay" onclick="openPlayer()">▶</button>
+        <div class="mplay-hint" id="mHint">Tonton sekarang</div>
+      </div>
+    </div>
+    <div class="mbody">
+      <div class="m-title" id="mTitle">--</div>
+      <div class="m-meta" id="mMeta"></div>
+      <div class="m-desc" id="mDesc">--</div>
+      <div class="m-acts">
+        <button class="m-btn lk" id="mLk" onclick="togLike()">♡ <span id="mLkN">0</span></button>
+        <button class="m-btn sv" id="mSv" onclick="togSave()">🔖 Simpan</button>
+        <button class="m-btn" onclick="doShare()">📤</button>
+        <button class="btn-p" style="flex:1;justify-content:center" onclick="openPlayer()">▶ Tonton</button>
+      </div>
+      <div class="cast-ttl">PELAKON</div>
+      <div class="cast-row" id="mCast"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO PLAYER CUSTOM -->
+<div id="pgPlayer" class="pg">
+  <div class="ptop">
+    <button class="pback" onclick="closePlayer()">←</button>
+    <div class="ptitle-bar" id="pTitle">--</div>
+  </div>
+  <div class="pvideo-wrap" id="pWrap">
+    <iframe id="pFrame"
+      allowfullscreen webkitallowfullscreen mozallowfullscreen
+      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer">
+    </iframe>
+    <div class="pload-ov" id="pLoad">
+      <div class="pload-logo">WaieStream</div>
+      <div class="spin"></div>
+      <div class="pload-txt" id="pLoadTxt">Memuatkan video...</div>
+    </div>
+    <div class="perror-ov" id="pError">
+      <div class="perror-ic">😕</div>
+      <div class="perror-msg">Video tidak dapat dimuatkan.<br>Cuba sumber lain di bawah.</div>
+      <button class="perror-retry" onclick="nextSrc()">Cuba Sumber Lain →</button>
+    </div>
+  </div>
+  <div class="pbot">
+    <div class="psrc-row" id="pSrcRow"></div>
+    <div class="pbot-row2">
+      <div class="psubtitle-info">💬 Subtitle: tekan CC dalam player</div>
+      <button class="pfs-btn" onclick="goFS()">⛶ Skrin Penuh</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="sovl" id="sovl">
+  <div class="s-top">
+    <div class="s-wrap">
+      <span style="font-size:15px;color:var(--txt3)">🔍</span>
+      <input type="text" id="sIn" placeholder="Cari filem, drama, anime..." oninput="doSrch(this.value)" autocomplete="off">
+    </div>
+    <button class="s-close" onclick="closeSrch()">Tutup</button>
+  </div>
+  <div class="s-label" id="sLabel">Popular sekarang</div>
+  <div class="s-grid" id="sGrid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════
+// CONFIG
+// ═══════════════════════════════
+const AK='c3ed3120959a25aaf6ea83a9ea4efec8';
+const B='https://api.themoviedb.org/3';
+const I='https://image.tmdb.org/t/p';
+const GN={28:'Aksi',12:'Pengembaraan',16:'Animasi',35:'Komedi',80:'Jenayah',18:'Drama',10751:'Keluarga',14:'Fantasi',27:'Seram',9648:'Misteri',10749:'Romantis',878:'Sci-Fi',53:'Thriller'};
+
+// Sumber video — 2embed yang terbukti jalan sebagai sumber 1
+function getSrcs(id,tv){
+  const t=tv?'tv':'movie';
+  return [
+    {n:'Sumber 1',u:`https://www.2embed.cc/embed/${id}`},
+    {n:'Sumber 2',u:`https://www.2embed.to/embed/tmdb/${t}?id=${id}`},
+    {n:'Sumber 3',u:`https://player.autoembed.cc/embed/${t}/${id}`},
+    {n:'Sumber 4',u:`https://embed.smashystream.com/playere.php?tmdb=${id}`},
+  ];
+}
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let U=null,liked=new Set(),saved=new Set(),hist=[];
+let curFilm=null,heroFs=[],heroI=0,heroT=null;
+let lMode='h',curSrc=0,prevPage='app';
+
+// ═══════════════════════════════
+// SESSION — CARA PALING SIMPLE
+// Simpan terus sebagai string, bukan JSON
+// ═══════════════════════════════
+function saveSession(u){
+  if(u.guest)return;
+  try{
+    localStorage.setItem('ws5_em',u.email);
+    localStorage.setItem('ws5_pw',u.pass);
+    localStorage.setItem('ws5_nm',u.name);
+    localStorage.setItem('ws5_ts',String(Date.now()));
+  }catch(e){}
+}
+function loadSession(){
+  try{
+    const em=localStorage.getItem('ws5_em');
+    const pw=localStorage.getItem('ws5_pw');
+    const nm=localStorage.getItem('ws5_nm');
+    const ts=parseInt(localStorage.getItem('ws5_ts')||'0');
+    if(!em||!pw||!nm)return null;
+    if(Date.now()-ts>30*24*60*60*1000){clearSession();return null;}
+    return{email:em,pass:pw,name:nm};
+  }catch(e){return null;}
+}
+function clearSession(){
+  ['ws5_em','ws5_pw','ws5_nm','ws5_ts'].forEach(k=>localStorage.removeItem(k));
+}
+
+// ═══════════════════════════════
+// AUTH
+// ═══════════════════════════════
+function aTab(t){
+  document.getElementById('fLi').style.display=t==='li'?'block':'none';
+  document.getElementById('fRe').style.display=t==='re'?'block':'none';
+  document.getElementById('tLi').classList.toggle('on',t==='li');
+  document.getElementById('tRe').classList.toggle('on',t==='re');
+  document.getElementById('liErr').style.display='none';
+  document.getElementById('reErr').style.display='none';
+}
+
+function hashP(p){
+  let h=0;
+  for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}
+  return'h'+Math.abs(h).toString(36)+p.length;
+}
+
+function getUsers(){return JSON.parse(localStorage.getItem('ws5_users')||'[]');}
+function saveUsers(u){localStorage.setItem('ws5_users',JSON.stringify(u));}
+
+function doLi(){
+  const u=document.getElementById('liU').value.trim();
+  const p=document.getElementById('liP').value;
+  if(!u||!p){setErr('liErr','Sila isi semua maklumat.');return;}
+  const users=getUsers();
+  const found=users.find(x=>(x.name.toLowerCase()===u.toLowerCase()||x.email.toLowerCase()===u.toLowerCase())&&x.pass===hashP(p));
+  if(!found){setErr('liErr','Nama atau kata laluan salah.');return;}
+  loginOk(found);
+}
+
+function doRe(){
+  const n=document.getElementById('reN').value.trim();
+  const e=document.getElementById('reE').value.trim();
+  const p=document.getElementById('reP').value;
+  if(!n||!e||!p){setErr('reErr','Sila isi semua maklumat.');return;}
+  if(p.length<6){setErr('reErr','Kata laluan minimum 6 aksara.');return;}
+  const users=getUsers();
+  if(users.find(x=>x.email.toLowerCase()===e.toLowerCase())){setErr('reErr','E-mel sudah didaftar.');return;}
+  if(users.find(x=>x.name.toLowerCase()===n.toLowerCase())){setErr('reErr','Nama sudah digunakan.');return;}
+  const nu={name:n,email:e,pass:hashP(p)};
+  users.push(nu);saveUsers(users);
+  loginOk(nu);
+}
+
+function doGuest(){loginOk({name:'Tetamu',email:'guest@ws',pass:'',guest:true});}
+
+function loginOk(u){
+  U=u;
+  const k=u.email;
+  liked=new Set(JSON.parse(localStorage.getItem('ws5_lk_'+k)||'[]'));
+  saved=new Set(JSON.parse(localStorage.getItem('ws5_sv_'+k)||'[]'));
+  hist=JSON.parse(localStorage.getItem('ws5_hs_'+k)||'[]');
+  saveSession(u);
+  refreshUI();
+  document.getElementById('bnav').style.display='block';
+  // AUTH HILANG TERUS — tunjuk app
+  document.getElementById('pgAuth').classList.remove('on');
+  document.getElementById('pgApp').classList.add('on');
+  updateStats();
+  initApp();
+  if(!u._q)toast('Selamat datang, '+u.name+'! 👋');
+}
+
+function refreshUI(){
+  if(!U)return;
+  const i=U.name[0].toUpperCase();
+  document.getElementById('navAv').textContent=i;
+  document.getElementById('prAv').textContent=i;
+  document.getElementById('prNm').textContent=U.name;
+  document.getElementById('prEm').textContent=U.guest?'Akaun Tetamu':U.email;
+  document.getElementById('guestBox').style.display=U.guest?'block':'none';
+}
+
+function tryAuto(){
+  const s=loadSession();
+  if(!s)return false;
+  const users=getUsers();
+  const u=users.find(x=>x.email===s.email&&x.pass===s.pass&&x.name===s.name);
+  if(!u)return false;
+  u._q=true;// quiet
+  loginOk(u);
+  return true;
+}
+
+function doLogout(){
+  clearSession();
+  U=null;liked=new Set();saved=new Set();hist=[];
+  document.getElementById('bnav').style.display='none';
+  // Sembunyikan semua, tunjuk auth
+  ['pgApp','pgLib','pgProf','pgPlayer'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('pgAuth').classList.add('on');
+  document.getElementById('liU').value='';
+  document.getElementById('liP').value='';
+  aTab('li');
+  toast('Berjaya log keluar.');
+}
+
+function setErr(id,msg){
+  const e=document.getElementById(id);
+  e.textContent=msg;e.style.display='block';
+}
+
+// ═══════════════════════════════
+// PAGE NAV — SIMPLE, TAK AKAN PERGI AUTH
+// ═══════════════════════════════
+function goPage(p){
+  if(!U&&p!=='auth')return;// Guard
+  const ids={app:'pgApp',lib:'pgLib',prof:'pgProf',player:'pgPlayer'};
+  // Sembunyikan app pages (bukan auth, bukan player)
+  ['pgApp','pgLib','pgProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  if(ids[p])document.getElementById(ids[p]).classList.add('on');
+  ['bApp','bLib','bProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const bm={app:'bApp',lib:'bLib',prof:'bProf'};
+  if(bm[p])document.getElementById(bm[p]).classList.add('on');
+  window.scrollTo(0,0);
+  if(p==='prof'){refreshUI();updateStats();}
+  if(p==='lib')renderLib();
+}
+
+// ═══════════════════════════════
+// API
+// ═══════════════════════════════
+async function api(path,params=''){
+  try{const r=await fetch(`${B}${path}?api_key=${AK}&language=en-US${params}`);return await r.json();}
+  catch(e){return null;}
+}
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+async function initApp(){
+  buildGenres();showSkel();
+  document.getElementById('loader').classList.add('hide');
+  const trend=await api('/trending/all/week');
+  heroFs=(trend?.results||[]).filter(f=>f.backdrop_path).slice(0,6);
+  buildHero();
+  buildRow('rTrend',trend?.results||[]);
+  // Background loads
+  api('/movie/popular').then(d=>buildRow('rPop',d?.results||[]));
+  api('/discover/tv','&with_genres=16&sort_by=popularity.desc').then(d=>buildRow('rAnime',d?.results||[],true));
+  api('/tv/popular').then(d=>buildRow('rTV',d?.results||[],true));
+  api('/discover/movie','&with_original_language=ms|zh|ko|ja|th&sort_by=popularity.desc').then(d=>buildRow('rAsia',d?.results||[]));
+  api('/movie/top_rated').then(d=>buildRow('rTop',d?.results||[]));
+}
+
+// ═══════════════════════════════
+// HERO
+// ═══════════════════════════════
+function buildHero(){
+  const dots=document.getElementById('hDots');
+  dots.innerHTML='';
+  heroFs.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='hdot'+(i===0?' on':'');
+    d.onclick=()=>setHero(i);
+    dots.appendChild(d);
+  });
+  setHero(0);
+  if(heroT)clearInterval(heroT);
+  heroT=setInterval(()=>setHero((heroI+1)%heroFs.length),6000);
+}
+function setHero(i){
+  heroI=i;const f=heroFs[i];if(!f)return;
+  document.getElementById('hBg').style.backgroundImage=`url(${I}/w1280${f.backdrop_path})`;
+  document.getElementById('hTitle').textContent=(f.title||f.name||'').toUpperCase();
+  document.getElementById('hRat').textContent='⭐'+(f.vote_average?.toFixed(1)||'--');
+  document.getElementById('hYr').textContent=(f.release_date||f.first_air_date||'').split('-')[0]||'';
+  document.getElementById('hTp').textContent=f.media_type==='tv'?'Siri TV':'Filem';
+  document.getElementById('hDesc').textContent=f.overview||'';
+  document.getElementById('hTags').innerHTML=(f.genre_ids||[]).slice(0,3).map(g=>`<span class="htag">${GN[g]||''}</span>`).join('');
+  document.querySelectorAll('.hdot').forEach((d,j)=>d.classList.toggle('on',j===i));
+  document.getElementById('hPlay').onclick=()=>openModal(f);
+  document.getElementById('hInfo').onclick=()=>openModal(f);
+  document.getElementById('hLike').textContent=liked.has(f.id)?'❤️':'♡';
+  document.getElementById('hLike').onclick=()=>{
+    togLikeId(f.id);
+    document.getElementById('hLike').textContent=liked.has(f.id)?'❤️':'♡';
+    toast(liked.has(f.id)?'❤️ Disukai!':'Batal suka');
+  };
+}
+
+// ═══════════════════════════════
+// GENRES
+// ═══════════════════════════════
+function buildGenres(){
+  const gs=['Semua','Aksi','Drama','Seram','Komedi','Romantis','Sci-Fi','Animasi','Thriller'];
+  document.getElementById('gRow').innerHTML=gs.map((g,i)=>
+    `<button class="gchip${i===0?' on':''}" onclick="filterG(this,'${g}')">${g}</button>`
+  ).join('');
+}
+async function filterG(el,g){
+  document.querySelectorAll('.gchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+  if(g==='Semua'){const t=await api('/trending/all/week');buildRow('rTrend',t?.results||[]);return;}
+  const gid=Object.entries(GN).find(([k,v])=>v===g)?.[0];if(!gid)return;
+  showSkel('rTrend');
+  const data=await api('/discover/movie',`&with_genres=${gid}&sort_by=popularity.desc`);
+  buildRow('rTrend',data?.results||[]);
+}
+
+// ═══════════════════════════════
+// SKELETON & CARDS
+// ═══════════════════════════════
+function showSkel(id){
+  const ids=id?[id]:['rTrend','rPop','rAnime','rTV','rAsia','rTop'];
+  ids.forEach(rid=>{
+    const r=document.getElementById(rid);
+    if(r)r.innerHTML=Array(8).fill(`<div class="pc"><div class="skel" style="width:110px;aspect-ratio:2/3;border-radius:9px"></div><div class="skel" style="height:8px;margin-top:6px;border-radius:3px;width:75%"></div></div>`).join('');
+  });
+}
+function buildRow(rid,films,tv=false){
+  const row=document.getElementById(rid);if(!row)return;
+  if(!films.length){row.innerHTML='<div style="color:var(--txt3);padding:16px;font-size:11px">Tiada data</div>';return;}
+  row.innerHTML='';
+  films.slice(0,20).forEach(f=>row.appendChild(makeCard(f,tv)));
+}
+function makeCard(f,tv=false){
+  const el=document.createElement('div');el.className='pc';
+  const img=f.poster_path?`<img src="${I}/w342${f.poster_path}" alt="" loading="lazy">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
+  el.innerHTML=`
+    <div class="pc-thumb">
+      ${img}
+      <button class="pc-lk${liked.has(f.id)?' on':''}" onclick="event.stopPropagation();togLikeId(${f.id});this.classList.toggle('on');this.textContent=liked.has(${f.id})?'❤️':'♡'">
+        ${liked.has(f.id)?'❤️':'♡'}
+      </button>
+      <div class="pc-ov"><div class="pc-play">▶</div></div>
+    </div>
+    <div class="pc-info">
+      <div class="pc-title">${f.title||f.name||'--'}</div>
+      <div class="pc-sub">${(f.release_date||f.first_air_date||'').split('-')[0]||''} · ${tv?'Siri':'Filem'} · ⭐${f.vote_average?.toFixed(1)||'--'}</div>
+    </div>`;
+  el.onclick=()=>openModal(f,tv);
+  return el;
+}
+
+// ═══════════════════════════════
+// MODAL
+// ═══════════════════════════════
+async function openModal(f,tv=false){
+  if(!f||(!f.id&&!f.title&&!f.name))return;
+  curFilm={...f,tv};
+  addHist(f,tv);
+  document.getElementById('mBg').style.backgroundImage=f.backdrop_path?`url(${I}/w780${f.backdrop_path})`:'none';
+  document.getElementById('mTitle').textContent=(f.title||f.name||'Tidak diketahui').toUpperCase();
+  document.getElementById('mDesc').textContent=f.overview||'Tiada sinopsis.';
+  const yr=(f.release_date||f.first_air_date||'').split('-')[0];
+  document.getElementById('mMeta').innerHTML=`
+    <span class="bdg bdg-g">⭐${f.vote_average?.toFixed(1)||'--'}</span>
+    <span style="color:var(--txt3);font-size:11px">${yr}</span>
+    <span style="color:var(--txt3);font-size:11px">${tv?'Siri TV':'Filem'}</span>
+    ${(f.genre_ids||[]).slice(0,3).map(g=>`<span class="htag">${GN[g]||''}</span>`).join('')}
+  `;
+  document.getElementById('mLk').classList.toggle('on',liked.has(f.id));
+  document.getElementById('mLk').innerHTML=`${liked.has(f.id)?'❤️':'♡'} <span id="mLkN">${(f.vote_count||0)+(liked.has(f.id)?1:0)}</span>`;
+  document.getElementById('mSv').classList.toggle('on',saved.has(f.id));
+  document.getElementById('mSv').textContent=saved.has(f.id)?'🔖 Tersimpan':'🔖 Simpan';
+  document.getElementById('mCast').innerHTML='<div style="color:var(--txt3);font-size:10px;padding:4px">Memuatkan...</div>';
+  document.getElementById('mbg').classList.add('on');
+  document.body.style.overflow='hidden';
+  const type=tv?'tv':'movie';
+  const credits=await api(`/${type}/${f.id}/credits`);
+  if(credits?.cast){
+    document.getElementById('mCast').innerHTML=credits.cast.slice(0,10).map(c=>`
+      <div class="cast-item">
+        <div class="cast-av">${c.profile_path?`<img src="${I}/w185${c.profile_path}" alt="" loading="lazy">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>'}</div>
+        <div class="cast-nm">${c.name}</div>
+      </div>`).join('');
+  }
+}
+function closeModal(){
+  document.getElementById('mbg').classList.remove('on');
+  document.body.style.overflow='';
+}
+
+// ═══════════════════════════════
+// PLAYER — KELUAR = BALIK KE APP
+// ═══════════════════════════════
+function openPlayer(){
+  if(!curFilm)return;
+  // Simpan page mana datang
+  if(document.getElementById('pgLib').classList.contains('on'))prevPage='lib';
+  else if(document.getElementById('pgProf').classList.contains('on'))prevPage='prof';
+  else prevPage='app';
+  closeModal();
+  document.getElementById('pTitle').textContent=(curFilm.title||curFilm.name||'').toUpperCase();
+  // Build sumber buttons
+  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  document.getElementById('pSrcRow').innerHTML=srcs.map((s,i)=>
+    `<button class="psrc-btn${i===0?' on':''}" onclick="loadSrc(${i})">${s.n}</button>`
+  ).join('');
+  loadSrc(0);
+  // Tunjuk player — SEMBUNYIKAN halaman lain tapi JANGAN tunjuk auth
+  ['pgApp','pgLib','pgProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('pgPlayer').classList.add('on');
+}
+
+function loadSrc(idx){
+  curSrc=idx;
+  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  const src=srcs[idx];if(!src)return;
+  document.querySelectorAll('.psrc-btn').forEach((b,i)=>b.classList.toggle('on',i===idx));
+  document.getElementById('pError').classList.remove('show');
+  document.getElementById('pLoad').classList.remove('hide');
+  document.getElementById('pLoadTxt').textContent='Memuatkan '+src.n+'...';
+  const frame=document.getElementById('pFrame');
+  frame.src='';
+  frame.removeAttribute('sandbox');
+  setTimeout(()=>{
+    frame.src=src.u;
+    // Hide loader selepas 7s
+    setTimeout(()=>document.getElementById('pLoad').classList.add('hide'),7000);
+  },400);
+}
+
+function nextSrc(){
+  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  const next=(curSrc+1)%srcs.length;
+  loadSrc(next);
+}
+
+// KELUAR PLAYER — KEMBALI KE APP BUKAN LOGIN
+function closePlayer(){
+  document.getElementById('pFrame').src='';
+  try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}
+  document.getElementById('pgPlayer').classList.remove('on');
+  // Kembali ke prevPage — PASTIKAN ada user
+  if(U){
+    const ids={app:'pgApp',lib:'pgLib',prof:'pgProf'};
+    if(ids[prevPage])document.getElementById(ids[prevPage]).classList.add('on');
+    else document.getElementById('pgApp').classList.add('on');
+    // Update bnav
+    ['bApp','bLib','bProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
+    const bm={app:'bApp',lib:'bLib',prof:'bProf'};
+    if(bm[prevPage])document.getElementById(bm[prevPage]).classList.add('on');
+    else document.getElementById('bApp').classList.add('on');
+  }
+}
+
+function goFS(){
+  const frame=document.getElementById('pFrame');
+  const wrap=document.getElementById('pWrap');
+  if(frame.requestFullscreen)frame.requestFullscreen();
+  else if(frame.webkitRequestFullscreen)frame.webkitRequestFullscreen();
+  else if(wrap.requestFullscreen)wrap.requestFullscreen();
+  else if(wrap.webkitRequestFullscreen)wrap.webkitRequestFullscreen();
+}
+
+// ═══════════════════════════════
+// LIKE / SAVE
+// ═══════════════════════════════
+function togLike(){
+  if(!curFilm)return;
+  togLikeId(curFilm.id);
+  const on=liked.has(curFilm.id);
+  document.getElementById('mLk').classList.toggle('on',on);
+  const n=parseInt(document.getElementById('mLkN').textContent||0);
+  document.getElementById('mLkN').textContent=on?n+1:Math.max(0,n-1);
+  document.getElementById('mLk').childNodes[0].textContent=on?'❤️ ':'♡ ';
+  toast(on?'❤️ Disukai!':'Batal suka');
+}
+function togLikeId(id){
+  liked.has(id)?liked.delete(id):liked.add(id);
+  saveState();updateStats();
+}
+function togSave(){
+  if(!curFilm)return;
+  saved.has(curFilm.id)?saved.delete(curFilm.id):saved.add(curFilm.id);
+  saveState();updateStats();
+  const on=saved.has(curFilm.id);
+  document.getElementById('mSv').classList.toggle('on',on);
+  document.getElementById('mSv').textContent=on?'🔖 Tersimpan':'🔖 Simpan';
+  toast(on?'🔖 Disimpan!':'Dibuang dari senarai');
+}
+function doShare(){
+  const t=curFilm?.title||curFilm?.name||'Filem';
+  if(navigator.share)navigator.share({title:t,text:`Tengok "${t}" di WaieStream!`,url:location.href});
+  else{navigator.clipboard?.writeText(location.href);toast('🔗 Pautan disalin!');}
+}
+
+// ═══════════════════════════════
+// HISTORY
+// ═══════════════════════════════
+function addHist(f,tv=false){
+  hist=hist.filter(x=>x.id!==f.id);
+  hist.unshift({id:f.id,title:f.title||f.name,poster:f.poster_path,rating:f.vote_average,year:(f.release_date||f.first_air_date||'').split('-')[0],tv,ts:Date.now()});
+  hist=hist.slice(0,60);saveState();
+}
+
+// ═══════════════════════════════
+// LIBRARY
+// ═══════════════════════════════
+function lTab(t){
+  lMode=t;
+  ['ltH','ltS','ltL'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('lt'+t.toUpperCase()).classList.add('on');
+  renderLib();
+}
+function renderLib(){
+  const grid=document.getElementById('lGrid');
+  let items=lMode==='h'?hist:lMode==='s'?hist.filter(x=>saved.has(x.id)):hist.filter(x=>liked.has(x.id));
+  if(!items.length){grid.innerHTML='<div class="lempty">Tiada item di sini.<br>🎬</div>';return;}
+  grid.innerHTML=items.map(f=>`
+    <div class="sgc" onclick="fetchOpen(${f.id},${!!f.tv})">
+      <div class="sgc-thumb">${f.poster?`<img src="${I}/w342${f.poster}" alt="" loading="lazy">`:'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--card)">🎬</div>'}</div>
+      <div class="sgc-title">${f.title||'--'}</div>
+      <div class="sgc-sub">${f.year||''} ${f.rating?'· ⭐'+f.rating.toFixed(1):''}</div>
+    </div>`).join('');
+}
+async function fetchOpen(id,tv){
+  const data=await api(`/${tv?'tv':'movie'}/${id}`);
+  if(data)openModal(data,tv);
+}
+
+// ═══════════════════════════════
+// SEARCH
+// ═══════════════════════════════
+let sT=null;
+function openSrch(){
+  document.getElementById('sovl').classList.add('on');
+  document.getElementById('sLabel').textContent='Popular sekarang';
+  setTimeout(()=>document.getElementById('sIn').focus(),100);
+  api('/movie/popular').then(p=>renderSrch(p?.results||[]));
+}
+function closeSrch(){
+  document.getElementById('sovl').classList.remove('on');
+  document.getElementById('sIn').value='';
+}
+function doSrch(q){
+  clearTimeout(sT);
+  if(!q){
+    document.getElementById('sLabel').textContent='Popular sekarang';
+    api('/movie/popular').then(p=>renderSrch(p?.results||[]));
+    return;
+  }
+  document.getElementById('sLabel').textContent='Hasil: "'+q+'"';
+  document.getElementById('sGrid').innerHTML=Array(6).fill(`<div class="sgc"><div class="skel" style="aspect-ratio:2/3;border-radius:9px"></div><div class="skel" style="height:8px;margin-top:5px;border-radius:3px"></div></div>`).join('');
+  sT=setTimeout(async()=>{
+    const[mv,tv]=await Promise.all([
+      api('/search/movie',`&query=${encodeURIComponent(q)}`),
+      api('/search/tv',`&query=${encodeURIComponent(q)}`),
+    ]);
+    const movies=(mv?.results||[]).map(x=>({...x,media_type:'movie'}));
+    const tvs=(tv?.results||[]).map(x=>({...x,media_type:'tv'}));
+    const all=[...movies,...tvs].filter(x=>x.poster_path).sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+    renderSrch(all);
+  },400);
+}
+function renderSrch(films){
+  const grid=document.getElementById('sGrid');
+  if(!films.length){grid.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:20px;grid-column:1/-1;text-align:center">Tiada hasil</div>';return;}
+  grid.innerHTML=films.slice(0,24).map(f=>{
+    const isTV=f.media_type==='tv'||!!f.first_air_date;
+    const yr=(f.release_date||f.first_air_date||'').split('-')[0]||'';
+    return`<div class="sgc" onclick="closeSrch();openModal(${JSON.stringify(f).replace(/"/g,'&quot;')},${isTV})">
+      <div class="sgc-thumb">
+        ${f.poster_path?`<img src="${I}/w185${f.poster_path}" alt="" loading="lazy">`:'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--card)">🎬</div>'}
+        <div class="sgc-badge" style="background:${isTV?'rgba(59,130,246,.85)':'rgba(240,192,64,.85)'};color:#000">${isTV?'TV':'FILEM'}</div>
+      </div>
+      <div class="sgc-title">${f.title||f.name||'--'}</div>
+      <div class="sgc-sub">${yr} · ⭐${f.vote_average?.toFixed(1)||'--'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════
+// MORE ROWS
+// ═══════════════════════════════
+async function moreRow(type){
+  const p=Math.floor(Math.random()*5)+1;
+  showSkel('rTrend');
+  const map={trend:'/trending/all/week',pop:'/movie/popular',tv:'/tv/popular'};
+  let data;
+  if(type==='anime')data=await fetch(`${B}/discover/tv?api_key=${AK}&language=en-US&with_genres=16&sort_by=popularity.desc&page=${p}`).then(r=>r.json()).catch(()=>null);
+  else data=await api(map[type],`&page=${p}`);
+  buildRow('rTrend',data?.results||[],type==='tv'||type==='anime');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+function saveState(){
+  if(!U||U.guest)return;
+  const k=U.email;
+  localStorage.setItem('ws5_lk_'+k,JSON.stringify([...liked]));
+  localStorage.setItem('ws5_sv_'+k,JSON.stringify([...saved]));
+  localStorage.setItem('ws5_hs_'+k,JSON.stringify(hist));
+}
+function updateStats(){
+  document.getElementById('stW').textContent=hist.length;
+  document.getElementById('stL').textContent=liked.size;
+  document.getElementById('stS').textContent=saved.size;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2500);
+}
+
+// ═══════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();closeSrch();closePlayer();}
+});
+
+// ═══════════════════════════════
+// BOOT — AUTO LOGIN DULU
+// ═══════════════════════════════
+(function(){
+  const ok=tryAuto();
+  if(!ok)setTimeout(()=>document.getElementById('loader').classList.add('hide'),300);
+})();
+</script>
+</body>
+</html>
