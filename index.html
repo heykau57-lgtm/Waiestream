@@ -447,7 +447,7 @@ img{display:block;object-fit:cover}
       <button onclick="goFullscreen()" style="background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);color:var(--gold);font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;">⛶ Skrin Penuh</button>
     </div>
     <div class="psrc-row" id="pSrcRow"></div>
-    <div class="pnotice">💡 Kalau Sumber 1 tak jalan, cuba Sumber 2, 3 atau lain. Tunggu 5-10 saat untuk video load.</div>
+    <div class="pnotice">💡 Kalau Sumber 1 tak jalan, cuba Sumber lain. Subtitle: tekan ikon CC dalam player video. Tunggu 5-10 saat untuk load.</div>
   </div>
 </div>
 
@@ -559,57 +559,68 @@ function getUsers() {
 
 function loginOk(u) {
   U = u;
-  // Load data user
   const k = u.email;
   liked = new Set(JSON.parse(localStorage.getItem('ws_lk_' + k) || '[]'));
   saved = new Set(JSON.parse(localStorage.getItem('ws_sv_' + k) || '[]'));
   hist = JSON.parse(localStorage.getItem('ws_hs_' + k) || '[]');
-  // Save session (30 hari)
+  // Simpan session dengan cara paling simple
   if (!u.guest) {
-    localStorage.setItem('ws_sess', JSON.stringify({ email: u.email, pass: u.pass, t: Date.now() }));
+    localStorage.setItem('ws_sess_email', u.email);
+    localStorage.setItem('ws_sess_pass', u.pass);
+    localStorage.setItem('ws_sess_name', u.name);
+    localStorage.setItem('ws_sess_time', Date.now().toString());
   }
-  // Update UI
-  const ini = u.name[0].toUpperCase();
-  document.getElementById('navAv').textContent = ini;
-  document.getElementById('prAv').textContent = ini;
-  document.getElementById('prNm').textContent = u.name;
-  document.getElementById('prEm').textContent = u.guest ? 'Akaun Tetamu' : u.email;
-  document.getElementById('guestBox').style.display = u.guest ? 'block' : 'none';
+  updateUI();
   document.getElementById('bnav').style.display = 'block';
   updateStats();
-  // TUKAR KE APP PAGE — auth hilang terus
   showPage('app');
   initApp();
-  toast('Selamat datang, ' + u.name + '! 👋');
+  if (!u._silent) toast('Selamat datang, ' + u.name + '! 👋');
+}
+
+function updateUI() {
+  if (!U) return;
+  const ini = U.name[0].toUpperCase();
+  document.getElementById('navAv').textContent = ini;
+  document.getElementById('prAv').textContent = ini;
+  document.getElementById('prNm').textContent = U.name;
+  document.getElementById('prEm').textContent = U.guest ? 'Akaun Tetamu' : U.email;
+  document.getElementById('guestBox').style.display = U.guest ? 'block' : 'none';
 }
 
 function tryAutoLogin() {
   try {
-    const sess = JSON.parse(localStorage.getItem('ws_sess') || 'null');
-    if (!sess) return false;
-    if (Date.now() - sess.t > 30 * 24 * 60 * 60 * 1000) {
-      localStorage.removeItem('ws_sess'); return false;
+    const email = localStorage.getItem('ws_sess_email');
+    const pass = localStorage.getItem('ws_sess_pass');
+    const t = parseInt(localStorage.getItem('ws_sess_time') || '0');
+    if (!email || !pass) return false;
+    // 30 hari
+    if (Date.now() - t > 30 * 24 * 60 * 60 * 1000) {
+      clearSession(); return false;
     }
     const users = getUsers();
-    const u = users.find(x => x.email === sess.email && x.pass === sess.pass);
+    const u = users.find(x => x.email === email && x.pass === pass);
     if (!u) return false;
-    // Silent login - update timestamp
-    sess.t = Date.now();
-    localStorage.setItem('ws_sess', JSON.stringify(sess));
+    // Update timestamp
+    localStorage.setItem('ws_sess_time', Date.now().toString());
+    u._silent = true;
     loginOk(u);
     return true;
   } catch (e) { return false; }
 }
 
+function clearSession() {
+  ['ws_sess_email','ws_sess_pass','ws_sess_name','ws_sess_time','ws_sess'].forEach(k => localStorage.removeItem(k));
+}
+
 function doLogout() {
-  localStorage.removeItem('ws_sess');
+  clearSession();
   U = null; liked = new Set(); saved = new Set(); hist = [];
   document.getElementById('bnav').style.display = 'none';
-  showPage('auth');
-  // Reset form
   document.getElementById('liU').value = '';
   document.getElementById('liP').value = '';
   aTab('li');
+  showPage('auth');
   toast('Berjaya log keluar.');
 }
 
@@ -622,19 +633,16 @@ function showErr(id, msg) {
 // PAGE NAVIGATION
 // ═══════════════════════════
 function showPage(p) {
-  // Sembunyikan semua page
   ['pgAuth', 'pgApp', 'pgLib', 'pgProf', 'pgPlayer'].forEach(id => {
     document.getElementById(id).classList.remove('on');
   });
-  // Tunjuk page yang dipilih
   const map = { auth: 'pgAuth', app: 'pgApp', lib: 'pgLib', prof: 'pgProf', player: 'pgPlayer' };
   if (map[p]) document.getElementById(map[p]).classList.add('on');
-  // Update bottom nav
   ['bApp', 'bLib', 'bProf'].forEach(id => document.getElementById(id).classList.remove('on'));
   const bmap = { app: 'bApp', lib: 'bLib', prof: 'bProf' };
   if (bmap[p]) document.getElementById(bmap[p]).classList.add('on');
   if (p !== 'player') window.scrollTo(0, 0);
-  if (p === 'prof') { updateStats(); refreshProf(); }
+  if (p === 'prof') { updateStats(); updateUI(); }
   if (p === 'lib') renderLib();
 }
 
@@ -866,14 +874,18 @@ function switchSrc(idx) {
   toast('Menukar ke Sumber ' + (idx + 1) + '...');
 }
 
-// KELUAR PLAYER - kembali ke page sebelum player
+// KELUAR PLAYER
 let prevPage = 'app';
 function closePlayer() {
   const frame = document.getElementById('pFrame');
   frame.src = '';
   try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
-  // Kembali ke page sebelum (app/lib/search) - BUKAN auth
-  showPage(prevPage || 'app');
+  // Pastikan U masih ada, kalau ada terus ke prevPage
+  if (U) {
+    showPage(prevPage || 'app');
+  } else {
+    showPage('auth');
+  }
 }
 
 // FULLSCREEN - guna iframe native fullscreen
@@ -1034,14 +1046,7 @@ async function moreRow(type) {
 // ═══════════════════════════
 // PROFILE
 // ═══════════════════════════
-function refreshProf() {
-  if (!U) return;
-  const ini = U.name[0].toUpperCase();
-  document.getElementById('prAv').textContent = ini;
-  document.getElementById('prNm').textContent = U.name;
-  document.getElementById('prEm').textContent = U.guest ? 'Akaun Tetamu' : U.email;
-  document.getElementById('guestBox').style.display = U.guest ? 'block' : 'none';
-}
+
 
 // ═══════════════════════════
 // STATE
@@ -1079,9 +1084,10 @@ document.addEventListener('keydown', e => {
 // BOOT
 // ═══════════════════════════
 (function boot() {
-  // Hide loader dalam 300ms je
-  setTimeout(() => document.getElementById('loader').classList.add('hide'), 300);
-  tryAutoLogin();
+  const loggedIn = tryAutoLogin();
+  if (!loggedIn) {
+    setTimeout(() => document.getElementById('loader').classList.add('hide'), 300);
+  }
 })();
 </script>
 </body>
