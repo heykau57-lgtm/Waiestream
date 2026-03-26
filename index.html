@@ -789,6 +789,12 @@ function openPlayer(){
   const _t=curFilm.title||curFilm.name||'';
   const _y=(curFilm.release_date||curFilm.first_air_date||'').split('-')[0]||'';
   fetchSubtitle(_t,_y,curFilm.tv);
+  // Notify Android app (Sketchware) for native subtitle
+  try {
+    if(window.Android) {
+      window.Android.onVideoPlay(_t, _y, curFilm.tv||false);
+    }
+  } catch(e) {}
   // Tunjuk player
   ['pgApp','pgLib','pgProf'].forEach(id=>document.getElementById(id).classList.remove('on'));
   document.getElementById('pgPlayer').classList.add('on');
@@ -851,6 +857,8 @@ function closePlayer(){
   subLines=[];vidStartTime=null;
   document.getElementById('subOverlay').style.display='none';
   try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}
+  // Notify Android
+  try { if(window.Android) window.Android.onVideoStop(); } catch(e) {}
   document.getElementById('pgPlayer').classList.remove('on');
   // Kembali ke prevPage — PASTIKAN ada user
   if(U){
