@@ -206,20 +206,23 @@ img{display:block;object-fit:cover}
 .pnotice{font-size:11px;color:var(--txt3);line-height:1.5;padding:7px 10px;background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:7px;}
 
 /* ══ SEARCH ══ */
-.sovl{position:fixed;inset:0;z-index:300;background:rgba(6,9,15,.97);backdrop-filter:blur(20px);display:none;flex-direction:column;padding:0 14px 14px;}
+.sovl{position:fixed;inset:0;z-index:300;background:rgba(6,9,15,.98);backdrop-filter:blur(20px);display:none;flex-direction:column;padding:0;}
 .sovl.on{display:flex}
-.s-top{display:flex;align-items:center;gap:10px;padding:14px 0 12px;}
-.s-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--bdr2);border-radius:10px;padding:10px 13px;}
-.s-wrap input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14px}
+.s-top{display:flex;align-items:center;gap:10px;padding:50px 14px 0;}
+.s-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--bdr2);border-radius:12px;padding:12px 14px;box-shadow:0 0 0 1px transparent;transition:box-shadow .2s;}
+.s-wrap:focus-within{box-shadow:0 0 0 2px rgba(240,192,64,.3)}
+.s-wrap input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:15px}
 .s-wrap input::placeholder{color:var(--txt3)}
-.s-close{color:var(--txt2);font-size:22px;padding:4px;}
-.s-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;overflow-y:auto;flex:1}
+.s-close{color:var(--txt2);font-size:22px;padding:6px;flex-shrink:0}
+.s-label{font-size:11px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;padding:14px 14px 8px;}
+.s-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;flex:1;padding:0 14px 14px;}
 @media(min-width:480px){.s-grid{grid-template-columns:repeat(4,1fr)}}
-.sgc{cursor:pointer}
-.sgc-thumb{width:100%;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--card)}
+.sgc{cursor:pointer;transition:transform .2s}
+.sgc:active{transform:scale(.95)}
+.sgc-thumb{width:100%;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--card);position:relative;box-shadow:0 3px 10px rgba(0,0,0,.3)}
 .sgc-thumb img{width:100%;height:100%}
-.sgc-title{font-size:10px;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sgc-sub{font-size:9px;color:var(--txt3)}
+.sgc-title{font-size:11px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.sgc-sub{font-size:9px;color:var(--txt3);margin-top:1px}
 
 /* ══ LIBRARY ══ */
 #pgLib{min-height:100vh;padding:60px 14px 80px}
@@ -452,11 +455,13 @@ img{display:block;object-fit:cover}
 <div class="sovl" id="sovl">
   <div class="s-top">
     <div class="s-wrap">
-      <span style="font-size:16px">🔍</span>
+      <span style="font-size:16px;color:var(--txt3)">🔍</span>
       <input type="text" id="sIn" placeholder="Cari filem, drama, anime..." oninput="doSrch(this.value)" autocomplete="off">
+      <button onclick="document.getElementById('sIn').value='';doSrch('');" style="color:var(--txt3);font-size:14px;display:none" id="sClear">✕</button>
     </div>
-    <button class="s-close" onclick="closeSrch()">✕</button>
+    <button class="s-close" onclick="closeSrch()">Tutup</button>
   </div>
+  <div class="s-label" id="sLabel">Popular sekarang</div>
   <div class="s-grid" id="sGrid"></div>
 </div>
 
@@ -478,9 +483,9 @@ function vSrcs(id, tv) {
   return [
     { n: 'Sumber 1', u: `https://www.2embed.cc/embed/${id}` },
     { n: 'Sumber 2', u: `https://www.2embed.to/embed/tmdb/${t}?id=${id}` },
-    { n: 'Sumber 3', u: `https://embedsu.cc/embed/${t}/${id}` },
-    { n: 'Sumber 4', u: `https://embed.smashystream.com/playere.php?tmdb=${id}` },
-    { n: 'Sumber 5', u: `https://player.autoembed.cc/embed/${t}/${id}` },
+    { n: 'Sumber 3', u: `https://player.autoembed.cc/embed/${t}/${id}` },
+    { n: 'Sumber 4', u: `https://embedsu.cc/embed/${t}/${id}` },
+    { n: 'Sumber 5', u: `https://embed.smashystream.com/playere.php?tmdb=${id}` },
   ];
 }
 
@@ -582,13 +587,15 @@ function tryAutoLogin() {
   try {
     const sess = JSON.parse(localStorage.getItem('ws_sess') || 'null');
     if (!sess) return false;
-    // Expired after 30 days
     if (Date.now() - sess.t > 30 * 24 * 60 * 60 * 1000) {
       localStorage.removeItem('ws_sess'); return false;
     }
     const users = getUsers();
     const u = users.find(x => x.email === sess.email && x.pass === sess.pass);
     if (!u) return false;
+    // Silent login - update timestamp
+    sess.t = Date.now();
+    localStorage.setItem('ws_sess', JSON.stringify(sess));
     loginOk(u);
     return true;
   } catch (e) { return false; }
@@ -859,12 +866,14 @@ function switchSrc(idx) {
   toast('Menukar ke Sumber ' + (idx + 1) + '...');
 }
 
-// KELUAR PLAYER
+// KELUAR PLAYER - kembali ke page sebelum player
+let prevPage = 'app';
 function closePlayer() {
   const frame = document.getElementById('pFrame');
   frame.src = '';
   try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
-  showPage('app');
+  // Kembali ke page sebelum (app/lib/search) - BUKAN auth
+  showPage(prevPage || 'app');
 }
 
 // FULLSCREEN - guna iframe native fullscreen
@@ -952,23 +961,59 @@ async function fetchOpen(id, tv) {
 let sT = null;
 function openSrch() {
   document.getElementById('sovl').classList.add('on');
+  document.getElementById('sLabel').textContent = 'Popular sekarang';
   setTimeout(() => document.getElementById('sIn').focus(), 100);
   doSrch('');
 }
-function closeSrch() { document.getElementById('sovl').classList.remove('on'); document.getElementById('sIn').value = ''; }
+function closeSrch() {
+  document.getElementById('sovl').classList.remove('on');
+  document.getElementById('sIn').value = '';
+  document.getElementById('sClear').style.display = 'none';
+}
 function doSrch(q) {
   clearTimeout(sT);
+  const grid = document.getElementById('sGrid');
+  if (!q) {
+    // Tunjuk popular kalau search kosong
+    api('/movie/popular').then(p => renderSrchResults(p?.results || []));
+    return;
+  }
+  // Show loading skeleton
+  grid.innerHTML = Array(6).fill(`<div class="sgc"><div class="skel" style="aspect-ratio:2/3;border-radius:8px"></div><div class="skel" style="height:9px;margin-top:5px;border-radius:3px;width:80%"></div></div>`).join('');
+  document.getElementById('sLabel').textContent = 'Hasil carian: "' + q + '"';
+  document.getElementById('sClear').style.display = 'block';
   sT = setTimeout(async () => {
-    let films;
-    if (!q) { const p = await api('/movie/popular'); films = p?.results || []; }
-    else { const d = await api('/search/multi', `&query=${encodeURIComponent(q)}`); films = (d?.results || []).filter(x => x.media_type !== 'person'); }
-    document.getElementById('sGrid').innerHTML = films.slice(0, 24).map(f => `
-      <div class="sgc" onclick="closeSrch();openModal(${JSON.stringify(f).replace(/"/g, '&quot;')},${!!f.first_air_date})">
-        <div class="sgc-thumb">${f.poster_path ? `<img src="${I}/w185${f.poster_path}" alt="" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--card)">🎬</div>'}</div>
-        <div class="sgc-title">${f.title || f.name || '--'}</div>
-        <div class="sgc-sub">${(f.release_date || f.first_air_date || '').split('-')[0] || ''} · ⭐${f.vote_average?.toFixed(1) || '--'}</div>
-      </div>`).join('');
-  }, 350);
+    // Search movie DAN tv serentak untuk hasil lebih tepat
+    const [mv, tv] = await Promise.all([
+      api('/search/movie', `&query=${encodeURIComponent(q)}`),
+      api('/search/tv', `&query=${encodeURIComponent(q)}`),
+    ]);
+    const movies = (mv?.results || []).map(x => ({...x, media_type:'movie'}));
+    const tvs = (tv?.results || []).map(x => ({...x, media_type:'tv'}));
+    // Gabung dan sort by popularity
+    const all = [...movies, ...tvs]
+      .filter(x => x.poster_path)
+      .sort((a,b) => (b.popularity||0) - (a.popularity||0));
+    renderSrchResults(all);
+  }, 400);
+}
+
+function renderSrchResults(films) {
+  const grid = document.getElementById('sGrid');
+  if (!films.length) { grid.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:20px;grid-column:1/-1;text-align:center">Tiada hasil ditemui</div>'; return; }
+  grid.innerHTML = films.slice(0, 24).map(f => {
+    const isTV = f.media_type === 'tv' || !!f.first_air_date;
+    const yr = (f.release_date || f.first_air_date || '').split('-')[0] || '';
+    const rat = f.vote_average ? '⭐' + f.vote_average.toFixed(1) : '';
+    return `<div class="sgc" onclick="closeSrch();openModal(${JSON.stringify(f).replace(/"/g,'&quot;')},${isTV})">
+      <div class="sgc-thumb">
+        ${f.poster_path ? `<img src="${I}/w185${f.poster_path}" alt="" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--card)">🎬</div>'}
+        <div style="position:absolute;top:4px;left:4px;background:${isTV?'rgba(59,130,246,.8)':'rgba(240,192,64,.8)'};color:#000;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px">${isTV?'TV':'FILEM'}</div>
+      </div>
+      <div class="sgc-title">${f.title || f.name || '--'}</div>
+      <div class="sgc-sub">${yr}${yr&&rat?' · ':''}${rat}</div>
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════
