@@ -437,14 +437,18 @@ const B='https://api.themoviedb.org/3';
 const I='https://image.tmdb.org/t/p';
 const GN={28:'Aksi',12:'Pengembaraan',16:'Animasi',35:'Komedi',80:'Jenayah',18:'Drama',10751:'Keluarga',14:'Fantasi',27:'Seram',9648:'Misteri',10749:'Romantis',878:'Sci-Fi',53:'Thriller'};
 
-// Sumber video — 2embed yang terbukti jalan sebagai sumber 1
-function getSrcs(id,tv){
+// Sumber video — disusun dari paling accurate
+function getSrcs(id,tv,title,year){
   const t=tv?'tv':'movie';
   return [
-    {n:'Sumber 1',u:`https://www.2embed.cc/embed/${id}`},
-    {n:'Sumber 2',u:`https://www.2embed.to/embed/tmdb/${t}?id=${id}`},
-    {n:'Sumber 3',u:`https://player.autoembed.cc/embed/${t}/${id}`},
-    {n:'Sumber 4',u:`https://embed.smashystream.com/playere.php?tmdb=${id}`},
+    // vidsrc.xyz — paling accurate dengan TMDB ID
+    {n:'Sumber 1',u:`https://vidsrc.xyz/embed/${t}/${id}`},
+    // embed.su — backup yang bagus
+    {n:'Sumber 2',u:`https://embed.su/embed/${t}/${id}`},
+    // moviesapi — alternative
+    {n:'Sumber 3',u:`https://moviesapi.club/${t}/${id}`},
+    // 2embed — lama tapi ada
+    {n:'Sumber 4',u:`https://www.2embed.cc/embed/${id}`},
   ];
 }
 
@@ -762,14 +766,14 @@ function closeModal(){
 // ═══════════════════════════════
 function openPlayer(){
   if(!curFilm)return;
-  // Simpan page mana datang
   if(document.getElementById('pgLib').classList.contains('on'))prevPage='lib';
   else if(document.getElementById('pgProf').classList.contains('on'))prevPage='prof';
   else prevPage='app';
   closeModal();
   document.getElementById('pTitle').textContent=(curFilm.title||curFilm.name||'').toUpperCase();
-  // Build sumber buttons
-  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  const title=curFilm.title||curFilm.name||'';
+  const year=(curFilm.release_date||curFilm.first_air_date||'').split('-')[0]||'';
+  const srcs=getSrcs(curFilm.id,curFilm.tv,title,year);
   document.getElementById('pSrcRow').innerHTML=srcs.map((s,i)=>
     `<button class="psrc-btn${i===0?' on':''}" onclick="loadSrc(${i})">${s.n}</button>`
   ).join('');
@@ -781,7 +785,9 @@ function openPlayer(){
 
 function loadSrc(idx){
   curSrc=idx;
-  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  const title=curFilm.title||curFilm.name||'';
+  const year=(curFilm.release_date||curFilm.first_air_date||'').split('-')[0]||'';
+  const srcs=getSrcs(curFilm.id,curFilm.tv,title,year);
   const src=srcs[idx];if(!src)return;
   document.querySelectorAll('.psrc-btn').forEach((b,i)=>b.classList.toggle('on',i===idx));
   document.getElementById('pError').classList.remove('show');
@@ -798,7 +804,9 @@ function loadSrc(idx){
 }
 
 function nextSrc(){
-  const srcs=getSrcs(curFilm.id,curFilm.tv);
+  const title=curFilm.title||curFilm.name||'';
+  const year=(curFilm.release_date||curFilm.first_air_date||'').split('-')[0]||'';
+  const srcs=getSrcs(curFilm.id,curFilm.tv,title,year);
   const next=(curSrc+1)%srcs.length;
   loadSrc(next);
 }
