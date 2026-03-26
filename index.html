@@ -440,7 +440,12 @@ img{display:block;object-fit:cover}
   <div class="pbot">
     <div class="psrc-label">Pilih Sumber Video</div>
     <div class="psrc-row" id="pSrcRow"></div>
-    <div class="pnotice">💡 Kalau video tak muat, cuba sumber lain. Sesetengah sumber perlukan internet yang stabil.</div>
+    <div class="pnotice">
+💡 <b>Cara guna:</b><br>
+• <b>Embed 1 & 2</b> — cuba dalam app dulu<br>
+• <b>🔗 Tonton Luar</b> — buka tab baru, 100% jalan<br>
+• Kalau satu tak jalan, cuba yang lain
+</div>
   </div>
 </div>
 
@@ -472,10 +477,13 @@ const GN = {28:'Aksi',12:'Pengembaraan',16:'Animasi',35:'Komedi',80:'Jenayah',18
 function vSrcs(id, tv) {
   const t = tv ? 'tv' : 'movie';
   return [
-    { n: 'Sumber 1', u: `https://vidsrc.to/embed/${t}/${id}` },
-    { n: 'Sumber 2', u: `https://vidsrc.me/embed/${t}?tmdb=${id}` },
-    { n: 'Sumber 3', u: `https://2embed.cc/embed/${id}` },
-    { n: 'Sumber 4', u: `https://multiembed.mov/?video_id=${id}&tmdb=1` },
+    // iframe embeds (cuba dulu dalam app)
+    { n: 'Embed 1', u: `https://player.autoembed.cc/embed/${t}/${id}`, iframe: true },
+    { n: 'Embed 2', u: `https://www.cineby.ru/${t}/${id}`, iframe: true },
+    // buka tab baru (100% jalan)
+    { n: '🔗 Tonton Luar 1', u: `https://www.cineby.app/${t}/${id}`, tab: true },
+    { n: '🔗 Tonton Luar 2', u: `https://gomovies-online.cam/watch-${id}-online-free`, tab: true },
+    { n: '🔗 Tonton Luar 3', u: `https://fmovies.ps/film/${id}`, tab: true },
   ];
 }
 
@@ -833,20 +841,37 @@ function loadSrc(idx) {
   const srcs = vSrcs(curFilm.id, curFilm.tv);
   const src = srcs[idx];
   if (!src) return;
-  // Show loading
+  document.querySelectorAll('.psrc-btn').forEach((b, i) => b.classList.toggle('on', i === idx));
+
+  if (src.tab) {
+    // Buka tab baru
+    const pl = document.getElementById('pLoad');
+    pl.classList.remove('hide');
+    document.getElementById('pLoadTxt').textContent = 'Membuka ' + src.n + '...';
+    document.getElementById('pFrame').src = '';
+    setTimeout(() => {
+      window.open(src.u, '_blank');
+      pl.classList.add('hide');
+      // Tunjuk mesej
+      document.getElementById('pLoadTxt').textContent = 'Video dibuka di tab baru ✓';
+      setTimeout(() => pl.classList.remove('hide'), 100);
+      setTimeout(() => pl.classList.add('hide'), 3000);
+    }, 500);
+    return;
+  }
+
+  // iframe embed
   const pl = document.getElementById('pLoad');
   pl.classList.remove('hide');
   document.getElementById('pLoadTxt').textContent = 'Memuatkan ' + src.n + '...';
-  // Load iframe
   const frame = document.getElementById('pFrame');
   frame.src = '';
+  // Remove sandbox untuk iframe embed
+  frame.removeAttribute('sandbox');
   setTimeout(() => {
     frame.src = src.u;
-    // Hide loading after 4s
-    setTimeout(() => pl.classList.add('hide'), 4000);
+    setTimeout(() => pl.classList.add('hide'), 5000);
   }, 300);
-  // Update buttons
-  document.querySelectorAll('.psrc-btn').forEach((b, i) => b.classList.toggle('on', i === idx));
 }
 
 function switchSrc(idx) {
