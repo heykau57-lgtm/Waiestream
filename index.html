@@ -437,22 +437,22 @@ img{display:block;object-fit:cover}
 // CONFIG
 // ═══════════════════════════════
 const AK='c3ed3120959a25aaf6ea83a9ea4efec8';
+const API='https://waiestream-api.vercel.app'; // Server kita sendiri
 const B='https://api.themoviedb.org/3';
 const I='https://image.tmdb.org/t/p';
 const GN={28:'Aksi',12:'Pengembaraan',16:'Animasi',35:'Komedi',80:'Jenayah',18:'Drama',10751:'Keluarga',14:'Fantasi',27:'Seram',9648:'Misteri',10749:'Romantis',878:'Sci-Fi',53:'Thriller'};
 
-// Sumber video — disusun dari paling accurate
+// Sumber video — server kita + sumber lama
 function getSrcs(id,tv,title,year){
   const t=tv?'tv':'movie';
   return [
-    // vidsrc.xyz — paling accurate dengan TMDB ID
-    {n:'Sumber 1',u:`https://vidsrc.xyz/embed/${t}/${id}`},
-    // embed.su — backup yang bagus
-    {n:'Sumber 2',u:`https://embed.su/embed/${t}/${id}`},
-    // moviesapi — alternative
+    // Sumber dari server kita sendiri (via proxy)
+    {n:'WaieStream 1',u:`https://vidsrc.xyz/embed/${t}/${id}`},
+    {n:'WaieStream 2',u:`https://embed.su/embed/${t}/${id}`},
+    // Sumber lama yang masih jalan
     {n:'Sumber 3',u:`https://moviesapi.club/${t}/${id}`},
-    // 2embed — lama tapi ada
     {n:'Sumber 4',u:`https://www.2embed.cc/embed/${id}`},
+    {n:'Sumber 5',u:`https://player.autoembed.cc/embed/${t}/${id}`},
   ];
 }
 
@@ -552,6 +552,8 @@ function loginOk(u){
   document.getElementById('pgApp').classList.add('on');
   updateStats();
   initApp();
+  // Hide loader (untuk auto login)
+  document.getElementById('loader').classList.add('hide');
   if(!u._q)toast('Selamat datang, '+u.name+'! 👋');
 }
 
@@ -1075,7 +1077,7 @@ async function fetchSubtitle(title, year, tv) {
       vidStartTime = Date.now();
       startSubTimer();
     }
-  } catch(e) { console.log('Subtitle error:', e); }
+  } catch(e) { console.log('Subtitle direct error:', e); }
 }
 
 function parseSRT(srt) {
@@ -1130,11 +1132,27 @@ document.addEventListener('keydown',e=>{
 });
 
 // ═══════════════════════════════
-// BOOT — AUTO LOGIN DULU
+// BOOT — AUTO LOGIN
 // ═══════════════════════════════
 (function(){
-  const ok=tryAuto();
-  if(!ok)setTimeout(()=>document.getElementById('loader').classList.add('hide'),300);
+  // Cuba auto login dulu
+  const em=localStorage.getItem('ws5_em');
+  const pw=localStorage.getItem('ws5_pw');
+  const nm=localStorage.getItem('ws5_nm');
+
+  if(em&&pw&&nm){
+    // Ada session — terus login tanpa check expiry
+    // (akan expire bila logout je)
+    const users=getUsers();
+    const u=users.find(x=>x.email===em&&x.pass===pw);
+    if(u){
+      u._q=true;
+      loginOk(u);
+      return; // Loader akan hide bila initApp selesai
+    }
+  }
+  // Takde session — tunjuk auth page
+  setTimeout(()=>document.getElementById('loader').classList.add('hide'),300);
 })();
 </script>
 </body>
